@@ -23,16 +23,16 @@ all_gima_years = []
 
 analysis_types = [
     "year_analysis-by_month-reading_count",
-    "month_anaylsis-by_day-reading_count",
+    "month_analysis-by_day-reading_count",
     "multiyear_analysis-by_year-reading_count",
-    "multiyear_analysis-by_year-day_count"
+    "multiyear_analysis-by_year-resampled_count"
 ]
 
 analysis_types_abbrev = [
     "yabmrc",
     "mabdrc",
     "myabyrc",
-    "myabydc"
+    "myabyrspc"
 ]
 
 ### Prompts
@@ -67,183 +67,202 @@ while True:
         analysis = analysis_types[analysis_types_abbrev.index(analysis_abbrev)]
         break
     else:
-        print("Enter valid year.")
+        print("Enter valid analysis.")
 
-### Load Datasets
-# Load SAMIII Data
-samIII_database_dir = f"D:/UAF/PHYS Capstone/pickles/samIII/*-SAMIII-Processed-Data.pickle"
-samIII_database_dir_list = gb.glob(samIII_database_dir)
-for database in samIII_database_dir_list:
-    samIII_year_dataframe = pd.read_pickle(database)
-    all_samIII_years.append(samIII_year_dataframe)
-samIII_selected_year_path = f"D:/UAF/PHYS Capstone/pickles/samIII/{selected_year}-SAMIII-Processed-Data.pickle"
-print("Created all_samII_years list...")
+print("\n")
+print("\n")
+print("### Next prompts only apply to analysis: \"multiyear_analysis-by_year-resampled_count\" ###")
+print("\n")
+print("\n")   
+print(f"Would you like to resample, and with what frequency of the data? [Options: T (minute), D (daily), W (weekly), M (monthly)]")
+while True:
+    resample = input()
+    if resample in [None, 'T', 'D', 'W', 'M']:
+        break
+    else:
+        print("Enter valid resample rate.")
 
-# Load GIMA Data
-gima_database_dir = f"D:/UAF/PHYS Capstone/pickles/gima/*-GIMA-Processed-Data.pickle"
-gima_database_dir_list = gb.glob(gima_database_dir)
-for database in gima_database_dir_list:
-    gima_year_dataframe = pd.read_pickle(database)
-    all_gima_years.append(gima_year_dataframe)
-gima_selected_year_path = f"D:/UAF/PHYS Capstone/pickles/gima/{selected_year}-GIMA-Processed-Data.pickle"
-print("Created all_gima_years list...")
+'''
+Unused. Yet.
+print(f"Which function would you like to use with the resample? [Options: max, min, mean]")
+while True:
+    resample_function = input()
+    if resample_function in ['max', 'min', 'mean']:
+        break
+    else:
+        print("Enter valid resample function.")'''
 
 dateformat = "%d.%m.%Y %H:%M:%S"
 
 ### Functions
 # Polymorphic analysis function
-def run_analysis(selected_year_dataframe, all_samIII_years, all_gima_years, chosen_anaylsis):
+def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, gima_all_years_dataframe, samIII_all_years_dataframe, chosen_anaylsis, resample):
     
-    print("Starting function...")
-    # Define all year dataframes
-    #samIII_all_years_dataframe = pd.DataFrame()
-    samIII_all_years_dataframe_max_day = pd.DataFrame()
-    #gima_all_years_dataframe = pd.DataFrame()
-    gima_all_years_dataframe_max_day = pd.DataFrame()
+    print("Starting analysis function...")
     
-    print("Starting appendation...")
-    # Append all years to dataframes
-    for i, database in enumerate(all_samIII_years):
-        temp_database = database
-        temp_database['day'] = temp_database.datetime.dt.day
-        temp_database = temp_database.groupby(['day']).max()
-        samIII_all_years_dataframe_max_day = pd.concat([samIII_all_years_dataframe_max_day, temp_database])
-        print(f"Calculated and added max day SAMIII dataframe: {i}")
-        #samIII_all_years_dataframe = pd.concat([samIII_all_years_dataframe, database])
-    #print(samIII_all_years_dataframe)
-    del all_samIII_years
-    
-    for i, database in enumerate(all_gima_years):
-        temp_database = database
-        temp_database['day'] = temp_database.datetime.dt.day
-        temp_database = temp_database.groupby(['day']).max()
-        gima_all_years_dataframe_max_day = pd.concat([gima_all_years_dataframe_max_day, temp_database])
-        print(f"Calculated and added max day GIMA dataframe: {i}")
-        #gima_all_years_dataframe = pd.concat([gima_all_years_dataframe, database])
-    #print(gima_all_years_dataframe)
-    del all_gima_years
-    
-    print("Done with appending")
     # Define Thresholds
     day_threshold = 500
     month_threshold = 500
     year_threshold = 500
-    
-    # Number of days by year analysis 
-    #selected_year_dataframe['month'] = selected_year_dataframe.datetime.dt.month
-    #selected_year_dataframe['day'] = selected_year_dataframe.datetime.dt.day
-    #samIII_all_years_dataframe['year'] = samIII_all_years_dataframe.datetime.dt.year
-    samIII_all_years_dataframe_max_day['year'] = samIII_all_years_dataframe_max_day.datetime.dt.year
-    #samIII_all_years_dataframe['day'] = samIII_all_years_dataframe.datetime.dt.day
-    #selected_year_dataframe = selected_year_dataframe.drop(columns=['datetime'])
-    #samIII_all_years_dataframe = samIII_all_years_dataframe.drop(columns=['datetime'])
 
-    # Reading count by month for a year analysis
+    # Number of readings above threshold by each month, for a year - "year_analysis-by_month-reading_count"
     if chosen_anaylsis == analysis_types[0]:
-        selected_year_dataframe = selected_year_dataframe.drop(columns=['day'])
-        selected_year_dataframe = selected_year_dataframe.set_index('month')
-
+        print(f"Month Threshold: {month_threshold}")
         for i in range(len(components)):
             fig1, ax1 = plt.subplots(figsize=[12,8])
-            
             # Calculations
-            one_comp_of_selected_year_dataframe = selected_year_dataframe[ (selected_year_dataframe[components[i]] > month_threshold) | (selected_year_dataframe[components[i]] < -month_threshold) ]
-            if one_comp_of_selected_year_dataframe.empty:
+            one_comp_of_samIII_selected_year_dataframe = samIII_selected_year_dataframe[ (samIII_selected_year_dataframe[components[i]] > month_threshold) | (samIII_selected_year_dataframe[components[i]] < -month_threshold) ]
+            if one_comp_of_samIII_selected_year_dataframe.empty:
                 print(f"No valid values for {components[i]}-component calculations!!")
                 continue
-            one_comp_of_selected_year_dataframe_count_by_month = one_comp_of_selected_year_dataframe.groupby(['month']).count()
-            one_comp_of_selected_year_dataframe_count_by_month = one_comp_of_selected_year_dataframe_count_by_month.reset_index()
+            
+            one_comp_of_samIII_selected_year_dataframe_count_by_month = one_comp_of_samIII_selected_year_dataframe.resample('M').count()
+            one_comp_of_samIII_selected_year_dataframe_count_by_month['month'] = one_comp_of_samIII_selected_year_dataframe_count_by_month.index.month
             
             # Plotting month count plots
-            one_comp_of_selected_year_dataframe_count_by_month.plot.bar(x='month', y=components[i])
-            plt.title(f"SAM-III Magnetometer Data - Year {selected_year} - Counts of {components[i]}-component values > {month_threshold}")
-            plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{selected_year}/{month_threshold}/{selected_year}_{components[i]}-component_month_count_above_threshold_of_{month_threshold}.png")  
+            one_comp_of_samIII_selected_year_dataframe_count_by_month.plot.bar(x='month', y=components[i])
+            plt.title(f"SAM-III Magnetometer Data - Year {selected_year} - Reading counts of {components[i]}-component values > {month_threshold} nT")
+            plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{selected_year}/{month_threshold}/{selected_year}_{components[i]}-component_month_reading_count_above_threshold_of_{month_threshold}.png")  
       
-    # Reading count in days by month analysis   
+    # Number of readings above threshold by each day, for each month, for a year - "month_analysis-by_day-reading_count"
     if chosen_anaylsis == analysis_types[1]:
-        selected_year_dataframe = selected_year_dataframe.set_index('month')
-        for month in selected_year_dataframe.index.unique():
-            dataframe_of_month = selected_year_dataframe[ selected_year_dataframe.index == month ]
+        print(f"Day Threshold: {day_threshold}")
+        for month in samIII_selected_year_dataframe.index.month.unique():
+            dataframe_of_month = samIII_selected_year_dataframe[ samIII_selected_year_dataframe.index.month == month ]
 
             for i in range(len(components)):
                 fig1, ax1 = plt.subplots(figsize=[12,8])
                 
                 # Calculations
-                one_comp_of_dataframe_of_month = dataframe_of_month[ (dataframe_of_month[components[i]] > day_threshold) | (dataframe_of_month[components[i]] < -day_threshold) ]
-                if one_comp_of_dataframe_of_month.empty:
+                one_comp_of_samIII_selected_year_dataframe = dataframe_of_month[ (dataframe_of_month[components[i]] > day_threshold) | (dataframe_of_month[components[i]] < -day_threshold) ]
+                if one_comp_of_samIII_selected_year_dataframe.empty:
                     print(f"No valid values for {components[i]}-component calculations for the month: {month}!!")
                     continue
-                one_comp_of_selected_year_dataframe_day_count_by_month = one_comp_of_dataframe_of_month.groupby(['day']).count()
-                one_comp_of_selected_year_dataframe_day_count_by_month = one_comp_of_selected_year_dataframe_day_count_by_month.reset_index()
+                
+                one_comp_of_samIII_selected_year_dataframe_count_by_month = one_comp_of_samIII_selected_year_dataframe.resample('D').count()
+                one_comp_of_samIII_selected_year_dataframe_count_by_month['day'] = one_comp_of_samIII_selected_year_dataframe_count_by_month.index.day
                 
                 # Plotting month count plots
-                one_comp_of_selected_year_dataframe_day_count_by_month.plot.bar(x='day', y=components[i])
-                plt.title(f"SAM-III Magnetometer Data - Year {selected_year} - Counts of {components[i]}-component values > {day_threshold}")
-                plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{selected_year}/{day_threshold}/{selected_year}_{month}_{components[i]}-component_day_count_above_threshold_of_{day_threshold}.png")
+                one_comp_of_samIII_selected_year_dataframe_count_by_month.plot.bar(x='day', y=components[i])
+                plt.title(f"SAM-III Magnetometer Data - Year {selected_year} - Reading counts of {components[i]}-component values > {day_threshold} nT")
+                plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{selected_year}/{day_threshold}/{selected_year}_{month}_{components[i]}-component_day_reading_count_above_threshold_of_{day_threshold}.png")
     
-    # Reading count in year by years analysis    
+    # Number of readings above threshold by each year, for multiple years - "multiyear_analysis-by_year-reading_count",
     if chosen_anaylsis == analysis_types[2]:
         print("All years dataframe: ")
-        print(all_years_dataframe)
-        all_years_dataframe = all_years_dataframe.set_index('year')
+        print(samIII_all_years_dataframe)
 
         for i in range(len(components)):
             fig1, ax1 = plt.subplots(figsize=[12,8])
             
             # Calculations
-            one_comp_of_all_years_dataframe = all_years_dataframe[ (all_years_dataframe[components[i]] > year_threshold) | (all_years_dataframe[components[i]] < -year_threshold) ]
+            one_comp_of_all_years_dataframe = samIII_all_years_dataframe[ (samIII_all_years_dataframe[components[i]] > year_threshold) | (samIII_all_years_dataframe[components[i]] < -year_threshold) ]
             if one_comp_of_all_years_dataframe.empty:
                 print(f"No valid values for {components[i]}-component calculations!!")
                 continue
 
-            one_comp_of_all_years_dataframe_count_by_month = one_comp_of_all_years_dataframe.groupby(['year']).count()
-            one_comp_of_all_years_dataframe_count_by_month = one_comp_of_all_years_dataframe_count_by_month.reset_index()
+            one_comp_of_all_years_dataframe_count_by_month = one_comp_of_all_years_dataframe.resample('A').count()
+            one_comp_of_all_years_dataframe_count_by_month['year'] = one_comp_of_all_years_dataframe_count_by_month.index.year
             
             # Plotting month count plots
             one_comp_of_all_years_dataframe_count_by_month.plot.bar(x='year', y=components[i])
-            plt.title(f"SAM-III Magnetometer Data - Counts of {components[i]}-component values > {year_threshold}")
+            plt.title(f"SAM-III Magnetometer Data - Reading counts of {components[i]}-component values > {year_threshold} nT")
             plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{components[i]}-component_year_count_above_threshold_of_{year_threshold}.png")
     
-    # Reading count in year by years analysis    
+    # Number of days above threshold by each year, for multiple years - "multiyear_analysis-by_year-day_count",
     if chosen_anaylsis == analysis_types[3]:
-        
-        samIII_all_years_dataframe_max_day = samIII_all_years_dataframe_max_day.set_index('year')
-        #gima_all_years_dataframe_max_day = gima_all_years_dataframe_max_day.set_index('year')
-
         for i in range(len(components)):
-            fig1, ax1 = plt.subplots(figsize=[12,8])
             
             # Calculations
-            samIII_one_comp_of_all_years_dataframe = samIII_all_years_dataframe_max_day[ (samIII_all_years_dataframe_max_day[components[i]] > year_threshold) | (samIII_all_years_dataframe_max_day[components[i]] < -year_threshold) ]
-            #gima_one_comp_of_all_years_dataframe = gima_all_years_dataframe_max_day[ (gima_all_years_dataframe_max_day[components[i]] > year_threshold) | (gima_all_years_dataframe_max_day[components[i]] < -year_threshold) ]
+            samIII_one_comp_of_all_years_dataframe = samIII_all_years_dataframe[ (samIII_all_years_dataframe[components[i]] > year_threshold) | (samIII_all_years_dataframe[components[i]] < -year_threshold) ]
+            gima_one_comp_of_all_years_dataframe = gima_all_years_dataframe[ (gima_all_years_dataframe[components[i]] > year_threshold) | (gima_all_years_dataframe[components[i]] < -year_threshold) ]
             if samIII_one_comp_of_all_years_dataframe.empty:
                 print(f"No valid values for {components[i]}-component calculations!!")
                 continue
             
-            # Check and print data
-            #print(samIII_one_comp_of_all_years_dataframe)
-            samIII_one_comp_of_all_years_dataframe_count_by_month = samIII_one_comp_of_all_years_dataframe.groupby(['year']).count()
-            #print(samIII_one_comp_of_all_years_dataframe_count_by_month)
-            samIII_one_comp_of_all_years_dataframe_count_by_month = samIII_one_comp_of_all_years_dataframe_count_by_month.reset_index()
-            print(f"Done with SAMIII: {i}")
-            #print(gima_one_comp_of_all_years_dataframe)
-            #gima_one_comp_of_all_years_dataframe_count_by_month = gima_one_comp_of_all_years_dataframe.groupby(['year']).count()
-            #print(gima_one_comp_of_all_years_dataframe_count_by_month)
-            #gima_one_comp_of_all_years_dataframe_count_by_month = gima_one_comp_of_all_years_dataframe_count_by_month.reset_index()
-            print(f"Done with GIMA: {i}")
+            # Check, print, and resample data
+            print(f"Starting the resampling for {components[i]}")
+            samIII_one_comp_of_all_years_dataframe_resampled_count = samIII_one_comp_of_all_years_dataframe.resample(resample).max().resample("Y").count()
+            samIII_one_comp_of_all_years_dataframe_resampled_count['year'] = samIII_one_comp_of_all_years_dataframe_resampled_count.index.year
+            print(f"Done with SAMIII: {components[i]}")
+            gima_one_comp_of_all_years_dataframe_resampled_count = gima_one_comp_of_all_years_dataframe.resample(resample).max().resample("Y").count()
+            gima_one_comp_of_all_years_dataframe_resampled_count['year'] = gima_one_comp_of_all_years_dataframe_resampled_count.index.year
+            print(f"Done with GIMA: {components[i]}")
+            print(f"Resampled Dataframes of dim {components[i]}:")
+            #print(samIII_one_comp_of_all_years_dataframe_resampled_count)
+            #print(gima_one_comp_of_all_years_dataframe_resampled_count)
             
             # Plotting month count plots
-            samIII_one_comp_of_all_years_dataframe_count_by_month.plot.bar(x='year', y=components[i])
-            #gima_one_comp_of_all_years_dataframe_count_by_month.plot.bar(x='year', y=components[i])
-            plt.title(f"SAM-III Magnetometer Data - Counts of {components[i]}-component values > {year_threshold}")
-            plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{components[i]}-component_year_count_above_threshold_of_{year_threshold}.png")
+            
+            # Width of a bar 
+            width = 0.3       
+
+            # Plotting
+            fig1, ax1 = plt.subplots(figsize=[12,8])
+            ax1.bar(samIII_one_comp_of_all_years_dataframe_resampled_count.year.tolist(), samIII_one_comp_of_all_years_dataframe_resampled_count[components[i]].tolist(), width, label='SAMIII')
+            ax1.bar(list(np.asarray(gima_one_comp_of_all_years_dataframe_resampled_count.year.tolist()) + width), gima_one_comp_of_all_years_dataframe_resampled_count[components[i]].tolist(), width, label='GIMA')
+            # Finding the best position for legends and putting it
+            #samIII_one_comp_of_all_years_dataframe_resampled_count.plot.bar(ax=ax1, x='year', y=components[i], color='red')
+            #gima_one_comp_of_all_years_dataframe_resampled_count.plot.bar(ax=ax1, x='year', y=components[i], color='blue')
+            plt.title(f"GIMA and SAMIII Magnetometer Data - {resample} counts of {components[i]}-component values > {year_threshold} nT")
+            plt.legend(loc='best')
+            plt.xlabel('Year')
+            plt.ylabel('# of Days')
+            # First argument - A list of positions at which ticks should be placed
+            # Second argument -  A list of labels to place at the given locations
+            plt.xticks(list(np.asarray(samIII_one_comp_of_all_years_dataframe_resampled_count.year.tolist()) + width / 2), samIII_one_comp_of_all_years_dataframe_resampled_count.year.tolist())
+            plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{components[i]}-component_year_{resample}_count_above_threshold_of_{year_threshold}.png")
 
 ### Main
 def main():
+    
+    ### Load Datasets
+    
+    # Define all year dataframes
+    samIII_all_years_dataframe = pd.DataFrame()
+    gima_all_years_dataframe = pd.DataFrame()
+    
+    # Load SAMIII Data
+    samIII_database_dir = f"D:/UAF/PHYS Capstone/pickles/samIII/*-SAMIII-Processed-Data.pickle"
+    samIII_multiyear_database_dir = f"D:/UAF/PHYS Capstone/pickles/samIII/{start_year}-{end_year}-SAMIII-Processed-Data.pickle"
+    samIII_selected_year_path = f"D:/UAF/PHYS Capstone/pickles/samIII/{selected_year}-SAMIII-Processed-Data.pickle"
+    samIII_database_dir_list = gb.glob(samIII_database_dir)
+    
+    try:
+        samIII_all_years_dataframe = pd.read_pickle(samIII_multiyear_database_dir)
+        print(f"{samIII_multiyear_database_dir} read successfully!")
+    except:
+        for database in samIII_database_dir_list:
+            samIII_year_dataframe = pd.read_pickle(database)
+            samIII_year_dataframe = samIII_year_dataframe.set_index('datetime')
+            samIII_all_years_dataframe = pd.concat([samIII_all_years_dataframe, database])
+            print(f"Appended SAMIII year dataframe: {start_year + i}")
+        samIII_all_years_dataframe.to_pickle(samIII_multiyear_database_dir)
 
     samIII_selected_year_dataframe = pd.read_pickle(samIII_selected_year_path)
+    samIII_selected_year_dataframe = samIII_selected_year_dataframe.set_index('datetime')
 
-    run_analysis(selected_year_dataframe=samIII_selected_year_dataframe, all_samIII_years=all_samIII_years, all_gima_years=all_gima_years, chosen_anaylsis=analysis)
+    # Load GIMA Data
+    gima_database_dir = f"D:/UAF/PHYS Capstone/pickles/gima/*-GIMA-Processed-Data.pickle"
+    gima_multiyear_database_dir = f"D:/UAF/PHYS Capstone/pickles/gima/{start_year}-{end_year}-GIMA-Processed-Data.pickle"
+    gima_selected_year_path = f"D:/UAF/PHYS Capstone/pickles/gima/{selected_year}-GIMA-Processed-Data.pickle"
+    gima_database_dir_list = gb.glob(gima_database_dir)
+    
+    try:
+        gima_all_years_dataframe = pd.read_pickle(gima_multiyear_database_dir)
+        print(f"{gima_multiyear_database_dir} read successfully!")
+    except:
+        for database in gima_database_dir_list:
+            gima_year_dataframe = pd.read_pickle(database)
+            gima_year_dataframe = gima_year_dataframe.set_index('datetime')
+            gima_all_years_dataframe = pd.concat([gima_all_years_dataframe, database])
+            print(f"Appended GIMA year dataframe: {start_year + i}")
+        gima_all_years_dataframe.to_pickle(gima_multiyear_database_dir)
+    
+    gima_selected_year_dataframe = pd.read_pickle(gima_selected_year_path)
+    gima_selected_year_dataframe = gima_selected_year_dataframe.set_index('datetime')
+
+    run_analysis(samIII_selected_year_dataframe=samIII_selected_year_dataframe, gima_selected_year_dataframe=gima_selected_year_dataframe, samIII_all_years_dataframe=samIII_all_years_dataframe, gima_all_years_dataframe=gima_all_years_dataframe, chosen_anaylsis=analysis, resample=resample)
 
 start_time = tm.time()
 main()

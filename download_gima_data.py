@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Hunter Barndt (w/ some help from ChatGPT - ha)
 # download_gima_data.py
 # Purpose: Download GIMA data from: http://magnetometer.rcs.alaska.edu/DATA/www
 
