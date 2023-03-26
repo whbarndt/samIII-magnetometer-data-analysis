@@ -1,2 +1,2 @@
 # samIII-magnetometer-data-analysis
-Python scripts to parse samIII data and analyze it using gima magnetometer data
+Python scripts to parse an implementation of samIII magnetometer data and analyze it with gima magnetometer data
