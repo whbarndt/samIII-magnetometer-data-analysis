@@ -3,6 +3,8 @@
 # Hunter Barndt
 # Purpose: Subtract each day's values in a year by the first value of the day
 
+### CAN POSSIBLY COMBINE WITH process_gima_datasets.py ####
+
 import pandas as pd
 import time as tm
 import numpy as np

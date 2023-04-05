@@ -1,3 +1,8 @@
 # Added by whbarndt
+*.pyc
+*.pkl
 /error
 /plots
+read_pickles.py
+readnplot_swugat_magdat.py
+readnplot_swugat_temptxts.py

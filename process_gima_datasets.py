@@ -3,10 +3,17 @@
 # Hunter Barndt
 # Purpose: Subtract each day's values in a year by the first value of the day
 
+### CAN POSSIBLY COMBINE WITH process_samIII_datasets.py ####
+
 import pandas as pd
 import time as tm
 import numpy as np
 import glob as gb
+
+# Self created imports
+from define import directory_preambles
+from define import current_machine
+from define import gima_sites
 
 ### Global Variables ###
 #start_year = 2009
@@ -14,9 +21,7 @@ start_year = 2010
 end_year = 2022
 num_years = end_year - start_year
 
-gima_sites = [
-    'trapper_creek'
-]
+gima_site = 'trapper'
 
 # Select specific year to analyze
 print(f"Which year would you like to process? [Option(s): {start_year} thru {end_year}]")
@@ -41,11 +46,11 @@ while True:
         print("Enter valid site.")
 
 # Declare pickle and csv output directories
-pickle_path_name = f"D:/UAF/PHYS Capstone/pickles/gima/{selected_year}-GIMA-Processed-Data.pickle"
-csv_path_name = f"D:/UAF/PHYS Capstone/csvs/gima/{selected_year}-GIMA-Processed-Data.csv"
+pickle_path_name = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/{selected_year}-GIMA-{gima_site}-Processed-Data.pickle"
+csv_path_name = f"{directory_preambles[current_machine]}csvs/gima/{gima_site}/{selected_year}-GIMA-{gima_site}-Processed-Data.csv"
 
 # Get csv directory
-glob_csv_year_dir = f"D:/UAF/PHYS Capstone/GIMA_Data/{selected_site}/{selected_year}/*.csv"
+glob_csv_year_dir = f"{directory_preambles[current_machine]}GIMA_SAM_Data/{gima_site}/{selected_year}/*.csv"
 csv_year_dir_list = gb.glob(glob_csv_year_dir)
 dateformat = "%Y_%m_%d %H:%M:%S"
 column_names = ['time', 'time-d', 'x', 'y', 'z']
@@ -66,7 +71,7 @@ def main():
     year_dataframe = pd.DataFrame()
     
     for day in csv_year_dir_list:
-        dir_substring = day[39:49]
+        dir_substring = day[-14:-4]
         day_dataframe = pd.read_csv(day, names=column_names)
         day_dataframe['datetime'] = pd.to_datetime(dir_substring + " " + day_dataframe['time'], format=dateformat)
         day_dataframe = day_dataframe.drop(columns=drop_cols)

@@ -1,34 +1,19 @@
 #!/usr/bin/env python3
-# Hunter Barndt (w/ some help from ChatGPT - ha)
+# Hunter Barndt
 # download_gima_data.py
 # Purpose: Download GIMA data from: http://magnetometer.rcs.alaska.edu/DATA/www
 
+### CAN BE GENERALIZED TO RCS MAG WEBSITES (e.g. swugatlas)
+
 import wget
 
-gima_sites = [
-    "trapper"
-]
-
-'''gima_sites = [
-    "poker",
-    "kaktovik",
-    "arctic",
-    "bettles",
-    "toolik",
-    "eagle",
-    "trapper",
-    "kenai",
-    "cigo",
-    "fortyukon",
-    "gakona",
-    "hlms",
-    "homer",
-]'''
-
-start_year = 2019
-end_year = 2022
-num_months = 12
-num_days = 31
+# Self created imports
+from define import gima_sites
+from define import gima_website
+from define import num_months
+from define import num_days
+from define import download_start_year
+from define import download_end_year
 
 '''# Select the year for which to download the files
 print(f"Which year would you like to download? [Option(s): {start_year} thru {end_year}]")
@@ -41,12 +26,12 @@ while True:
         print("Enter valid year.")'''
 
 # Loop over all possible combinations of month, day, and location
-for year in range(start_year, end_year + 1):
+for year in range(download_start_year, download_end_year + 1):
     for month in range(1, num_months + 1):
         for day in range(1, num_days + 1):
             for location in gima_sites:
                 # Construct the URL for the CSV file
-                url = f'http://magnetometer.rcs.alaska.edu/DATA/www/{year}/{month:02d}/{day:02d}/{location}/{location}_{year}_{month:02d}_{day:02d}.csv'
+                url = f'{gima_website}/DATA/www/{year}/{month:02d}/{day:02d}/{location}/{location}_{year}_{month:02d}_{day:02d}.csv'
                 
                 try:
                     # Download the CSV file using wget
