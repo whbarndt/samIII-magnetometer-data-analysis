@@ -31,14 +31,16 @@ analysis_types = [
     "year_analysis-by_month-reading_count",
     "month_analysis-by_day-reading_count",
     "multiyear_analysis-by_year-reading_count",
-    "multiyear_analysis-by_year-resampled_count"
+    "multiyear_analysis-by_year-resampled_count",
+    "multiyear_analysis-by_year-resampled_dhdt_count"
 ]
 
 analysis_types_abbrev = [
     "yabmrc",
     "mabdrc",
     "myabyrc",
-    "myabyrspc"
+    "myabyrspc",
+    "myabyrspdc"
 ]
 
 
@@ -77,7 +79,11 @@ while True:
         print("Enter valid analysis.")
 
 print("\n")
-print("### Next prompts only apply to analysis: \"multiyear_analysis-by_year-resampled_count\" ###")
+print("###") 
+print("Next prompts only apply to analysis: ")
+for i in range(2):
+    print(f"{analysis_types[i+3]}" )
+print("###")
 print("\n")   
 
 print(f"Would you like to resample, and with what frequency of the data? [Options: T (minute), D (daily), W (weekly), M (monthly)]")
@@ -90,15 +96,27 @@ while True:
 
 print(f"Would you like to include Sun Spot Totals in the graphs? [Options: yes, no]")
 while True:
-    flag_input = input()
-    if flag_input == 'yes':
+    sun_spot_flag_input = input()
+    if sun_spot_flag_input == 'yes':
         sunspot_flag = True
         break
-    elif flag_input == 'no':
+    elif sun_spot_flag_input == 'no':
         sunspot_flag = False
         break
     else:
-        print("Enter valid resample rate.")
+        print("Enter valid answer.")
+
+print(f"Would you like to plot in log-scale? [Options: yes, no]")
+while True:
+    logscale_flag_input = input()
+    if logscale_flag_input == 'yes':
+        logscale_flag = True
+        break
+    elif logscale_flag_input == 'no':
+        logscale_flag = False
+        break
+    else:
+        print("Enter valid answer.")
 
 '''
 Unused. Yet.
@@ -121,6 +139,7 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
     day_threshold = 500
     month_threshold = 500
     year_threshold = 500
+    diff_threshold = 6
 
     fig_size=[15,10]
 
@@ -209,23 +228,22 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
             
             print(f"Starting the resampling for {components[i]}")
             try: 
-                samIII_one_comp_of_all_years_dataframe = pd.read_pickle(f"{samIII_multiyear_database_dir[:-7]}_resampled_{year_threshold}.pickle")
+                samIII_one_comp_of_all_years_dataframe = pd.read_pickle(f"{samIII_multiyear_database_dir[:-7]}_resampled_{resample}_{year_threshold}.pickle")
             except:
                 samIII_one_comp_of_all_years_dataframe = samIII_one_comp_of_all_years_dataframe.resample(resample).max()
                 samIII_one_comp_of_all_years_dataframe = samIII_one_comp_of_all_years_dataframe.resample("Y").count()
                 #samIII_one_comp_of_all_years_dataframe = samIII_one_comp_of_all_years_dataframe.resample(resample).max().resample("Y").count()
-                samIII_one_comp_of_all_years_dataframe.to_pickle(f"{samIII_multiyear_database_dir[:-7]}_resampled.pickle")
+                samIII_one_comp_of_all_years_dataframe.to_pickle(f"{samIII_multiyear_database_dir[:-7]}_resampled_{resample}_{year_threshold}.pickle")
             samIII_one_comp_of_all_years_dataframe['year'] = samIII_one_comp_of_all_years_dataframe.index.year
             
             print(f"Done with SAMIII: {components[i]}")
             try: 
-                gima_one_comp_of_all_years_dataframe = pd.read_pickle(f"{gima_multiyear_database_dir[:-7]}_resampled_{year_threshold}.pickle")
+                gima_one_comp_of_all_years_dataframe = pd.read_pickle(f"{gima_multiyear_database_dir[:-7]}_resampled_{resample}_{year_threshold}.pickle")
             except:
                 gima_one_comp_of_all_years_dataframe = gima_one_comp_of_all_years_dataframe.resample(resample).max()
                 gima_one_comp_of_all_years_dataframe = gima_one_comp_of_all_years_dataframe.resample("Y").count()
                 #gima_one_comp_of_all_years_dataframe = gima_one_comp_of_all_years_dataframe.resample(resample).max().resample("Y").count()
-                gima_one_comp_of_all_years_dataframe.to_pickle(f"{gima_multiyear_database_dir[:-7]}_resampled.pickle")
-            
+                gima_one_comp_of_all_years_dataframe.to_pickle(f"{gima_multiyear_database_dir[:-7]}_resampled_{resample}_{year_threshold}.pickle")
             gima_one_comp_of_all_years_dataframe['year'] = gima_one_comp_of_all_years_dataframe.index.year
             print(f"Done with GIMA: {components[i]}")
             
@@ -259,7 +277,61 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
             plt.xlim([2009,2022])
             plt.title(f"GIMA and SAMIII Magnetometer Data - {resample} counts of {components[i]}-component values > {year_threshold} nT")
             plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{components[i]}-component_year_{resample}_count_above_threshold_of_{year_threshold}.png")
+    if chosen_anaylsis == analysis_types[4]:
+        
+        # Filter based on threshold
+        samIII_all_years_dataframe = samIII_all_years_dataframe[ (samIII_all_years_dataframe['dbdt'] > diff_threshold) | (samIII_all_years_dataframe['dbdt'] < -diff_threshold) ]
+        gima_all_years_dataframe = gima_all_years_dataframe[ (gima_all_years_dataframe['dbdt'] > diff_threshold) | (gima_all_years_dataframe['dbdt'] < -diff_threshold) ]
+        
+        # Convert all inf to nan and drop rows with them
+        gima_all_years_dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
+        gima_all_years_dataframe.dropna(inplace=True)
+        
+        print(samIII_all_years_dataframe)
+        print(gima_all_years_dataframe)
+        
+        # Resample to get year count
+        samIII_all_years_dataframe = samIII_all_years_dataframe.resample(resample).max()
+        samIII_all_years_dataframe = samIII_all_years_dataframe.resample("Y").count()
+        samIII_all_years_dataframe['year'] = samIII_all_years_dataframe.index.year
+        gima_all_years_dataframe = gima_all_years_dataframe.resample(resample).max()
+        gima_all_years_dataframe = gima_all_years_dataframe.resample("Y").count()
+        gima_all_years_dataframe['year'] = gima_all_years_dataframe.index.year
 
+        print(samIII_all_years_dataframe)
+        print(gima_all_years_dataframe)
+
+        # Width of a bar 
+        width = 0.3       
+
+        # Plotting
+        fig1, ax1 = plt.subplots(figsize=fig_size)
+        # Sun Spot Data
+        if sunspot_flag == True:
+            # Loading Sunspot data
+            ssn_df = pd.read_csv(f"{directory_preambles[current_machine]}SN_y_tot_V2.0.csv")
+            ssn_df.Year = ssn_df.Year-0.5
+            ax2 = ax1.twinx()
+            ax2.plot(ssn_df.Year, ssn_df.Total)
+            ax2.fill_between(np.arange(2008,2023,1), ssn_df.Total[ssn_df.Year>=2008], 0, color='green', alpha=0.4)
+            ax2.set_ylabel('Sun Spot Total #')
+            ax2.set_ylim(bottom=0)
+        # Histogram Count Data
+        if logscale_flag == True:
+            ax1.set_yscale('log')
+        ax1.bar(samIII_all_years_dataframe.year.tolist(), samIII_all_years_dataframe['dbdt'].tolist(), width, label='SAMIII')
+        ax1.bar(list(np.asarray(gima_all_years_dataframe.year.tolist()) + width), gima_all_years_dataframe['dbdt'].tolist(), width, label='GIMA')
+        # Finding the best position for legends and putting it
+        ax1.legend(loc='best')
+        ax1.set_xlabel('Year')
+        ax1.set_ylabel('# of dH/dt counts')
+        # First argument - A list of positions at which ticks should be placed
+        # Second argument -  A list of labels to place at the given locations
+        plt.xticks(list(np.asarray(gima_all_years_dataframe.year.tolist()) + width / 2), gima_all_years_dataframe.year.tolist())
+        plt.xlim([2009,2022])
+        plt.title(f"GIMA and SAMIII Magnetometer Data - minute counts of dH/dt values > {diff_threshold} nT/s")
+        plt.savefig(f"./plots/histograms/{chosen_anaylsis}/dH-dt_year_{resample}_count_above_threshold_of_{diff_threshold}.png")
+        
 ### Main
 def main():
     
@@ -271,7 +343,8 @@ def main():
     
     # Load SAMIII Data
     samIII_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/*-SAMIII-Processed-Data.pickle"
-    samIII_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/{start_year}-{end_year}-SAMIII-Processed-Data.pickle"
+    #samIII_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/{start_year}-{end_year}-SAMIII-Processed-Data.pickle"
+    samIII_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/samIII_{start_year}_to_{end_year}_1min.pkl"
     samIII_selected_year_path = f"{directory_preambles[current_machine]}pickles/samIII/{selected_year}-SAMIII-Processed-Data.pickle"
     samIII_database_dir_list = gb.glob(samIII_database_dir)
     
@@ -287,11 +360,12 @@ def main():
         samIII_all_years_dataframe.to_pickle(samIII_multiyear_database_dir)
 
     samIII_selected_year_dataframe = pd.read_pickle(samIII_selected_year_path)
-    samIII_selected_year_dataframe = samIII_selected_year_dataframe.set_index('datetime')
+    #samIII_selected_year_dataframe = samIII_selected_year_dataframe.set_index('datetime')
 
     # Load GIMA Data
     gima_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/*-GIMA-Processed-Data.pickle"
-    gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/{start_year}-{end_year}-GIMA-{gima_site}-Processed-Data.pickle"
+    #gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/{start_year}-{end_year}-GIMA-{gima_site}-Processed-Data.pickle"
+    gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/gima_{start_year}_to_{end_year}_1min.pkl"
     gima_selected_year_path = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/{selected_year}-GIMA-{gima_site}-Processed-Data.pickle"
     gima_database_dir_list = gb.glob(gima_database_dir)
     
@@ -307,7 +381,7 @@ def main():
         gima_all_years_dataframe.to_pickle(gima_multiyear_database_dir)
     
     gima_selected_year_dataframe = pd.read_pickle(gima_selected_year_path)
-    gima_selected_year_dataframe = gima_selected_year_dataframe.set_index('datetime')
+    #gima_selected_year_dataframe = gima_selected_year_dataframe.set_index('datetime')
 
     run_analysis(samIII_selected_year_dataframe=samIII_selected_year_dataframe, gima_selected_year_dataframe=gima_selected_year_dataframe, samIII_all_years_dataframe=samIII_all_years_dataframe, samIII_multiyear_database_dir=samIII_multiyear_database_dir, gima_all_years_dataframe=gima_all_years_dataframe, gima_multiyear_database_dir=gima_multiyear_database_dir, chosen_anaylsis=analysis, resample=resample)
 
