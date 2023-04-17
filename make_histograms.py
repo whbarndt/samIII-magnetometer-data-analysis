@@ -279,14 +279,25 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
             plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{components[i]}-component_year_{resample}_count_above_threshold_of_{year_threshold}.png")
     if chosen_anaylsis == analysis_types[4]:
         
+        print("Before dropping INFs and NANs")
+        print(samIII_all_years_dataframe)
+        print(gima_all_years_dataframe)
+        
+        # Convert all inf to nan and drop rows with them
+        #samIII_all_years_dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
+        samIII_all_years_dataframe.dropna(inplace=True)
+        #gima_all_years_dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
+        gima_all_years_dataframe.dropna(inplace=True)
+        
+        print("Dropped INFs and NANs")
+        print(samIII_all_years_dataframe)
+        print(gima_all_years_dataframe)
+        
         # Filter based on threshold
         samIII_all_years_dataframe = samIII_all_years_dataframe[ (samIII_all_years_dataframe['dbdt'] > diff_threshold) | (samIII_all_years_dataframe['dbdt'] < -diff_threshold) ]
         gima_all_years_dataframe = gima_all_years_dataframe[ (gima_all_years_dataframe['dbdt'] > diff_threshold) | (gima_all_years_dataframe['dbdt'] < -diff_threshold) ]
         
-        # Convert all inf to nan and drop rows with them
-        gima_all_years_dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
-        gima_all_years_dataframe.dropna(inplace=True)
-        
+        print("Filtered > |6nT/s|")
         print(samIII_all_years_dataframe)
         print(gima_all_years_dataframe)
         
@@ -344,7 +355,7 @@ def main():
     # Load SAMIII Data
     samIII_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/*-SAMIII-Processed-Data.pickle"
     #samIII_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/{start_year}-{end_year}-SAMIII-Processed-Data.pickle"
-    samIII_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/samIII_{start_year}_to_{end_year}_1min.pkl"
+    samIII_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/Doga/samIII_{start_year}_to_{end_year}_1min.pkl"
     samIII_selected_year_path = f"{directory_preambles[current_machine]}pickles/samIII/{selected_year}-SAMIII-Processed-Data.pickle"
     samIII_database_dir_list = gb.glob(samIII_database_dir)
     
@@ -365,7 +376,7 @@ def main():
     # Load GIMA Data
     gima_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/*-GIMA-Processed-Data.pickle"
     #gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/{start_year}-{end_year}-GIMA-{gima_site}-Processed-Data.pickle"
-    gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/gima_{start_year}_to_{end_year}_1min.pkl"
+    gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/Doga/gima_{start_year}_to_{end_year}_1min.pkl"
     gima_selected_year_path = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/{selected_year}-GIMA-{gima_site}-Processed-Data.pickle"
     gima_database_dir_list = gb.glob(gima_database_dir)
     
