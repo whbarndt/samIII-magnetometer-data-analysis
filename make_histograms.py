@@ -271,6 +271,7 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
             plt.title(f"GIMA and SAMIII Magnetometer Data - {resample} counts of {components[i]}-component values > {year_threshold} nT")
             
             plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{components[i]}-component_year_{resample}_count_above_threshold_of_{year_threshold}.png")
+
     # Number of days above dHdt threshold by each year, for multiple years - "multiyear_analysis-by_year-resampled_dhdt_count"
     if chosen_anaylsis == analysis_types[4]:
         
@@ -293,6 +294,7 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
         gima_all_years_dataframe = gima_all_years_dataframe[ (gima_all_years_dataframe['dbdt'] > diff_threshold) | (gima_all_years_dataframe['dbdt'] < -diff_threshold) ]
         
         print("Filtered > |6nT/s|")
+
         print(samIII_all_years_dataframe)
         print(gima_all_years_dataframe)
         
@@ -312,6 +314,7 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
 
         # Plotting
         fig1, ax1 = plt.subplots(figsize=fig_size)
+
         # Extra Data
         if extra_data_flag == True:
             if extra_data == 'sunspots':
@@ -332,6 +335,7 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
                 #ax2.fill_between(np.arange(2008,2023,1), temper_df.subf[temper_df.index>=2008], 0, color='blue', alpha=0.4)
                 ax2.set_ylabel('Subsurface Temperature')
                 ax2.set_ylim(bottom=0)
+                
         # Histogram Count Data
         if logscale_flag == True:
             ax1.set_yscale('log')
@@ -364,6 +368,7 @@ def main():
     samIII_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/*-SAMIII-Processed-Data.pickle"
     #samIII_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/{start_year}-{end_year}-SAMIII-Processed-Data.pickle"
     samIII_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/Doga/samIII_{start_year}_to_{end_year}_1min.pkl"
+
     samIII_selected_year_path = f"{directory_preambles[current_machine]}pickles/samIII/{selected_year}-SAMIII-Processed-Data.pickle"
     samIII_database_dir_list = gb.glob(samIII_database_dir)
     
