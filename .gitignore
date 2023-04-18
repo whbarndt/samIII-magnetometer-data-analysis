@@ -15,7 +15,3 @@ readnplot_swugat_temptxts.py
 *.fls
 *.log
 *.synctex.gz
-
-# Temporary 
-*.pdf
-*.tex

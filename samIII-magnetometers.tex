@@ -1,0 +1,81 @@
+\documentclass[12pt]{article}
+
+\topmargin 0.0cm
+\oddsidemargin 0.2cm
+\textwidth 16cm 
+\textheight 21cm
+\footskip 1.0cm
+
+%The next command sets up an environment for the abstract to your paper.
+
+\newenvironment{sciabstract}{%
+\begin{quote} \bf}
+{\end{quote}}
+
+% The following lines set up an environment for the last note in the
+% reference list, which commonly includes acknowledgments of funding,
+% help, etc.  It's intended for users of BibTeX or the {thebibliography}
+% environment.  Users who are hand-coding their references at the end
+% using a list environment such as {enumerate} can simply add another
+% item at the end, and it will be numbered automatically.
+
+\newcounter{lastnote}
+\newenvironment{scilastnote}{%
+\setcounter{lastnote}{\value{enumiv}}%
+\addtocounter{lastnote}{+1}%
+\begin{list}%
+{\arabic{lastnote}.}
+{\setlength{\leftmargin}{.22in}}
+{\setlength{\labelsep}{.5em}}}
+{\end{list}}
+
+\usepackage{graphicx}
+\usepackage[english]{babel}
+
+\title{The Prospects of Citizen Science Magnetometers: Simple Aurora Monitor - III (SAM-III)}
+
+\author
+{William H. Barndt, Doğacan S. Öztürk\\
+\\
+\normalsize{University of Alaska Fairbanks, Geophysical Institute, Space Weather UnderGround (SWUG)}\\
+\normalsize{whbarndt@alaska.edu, dsozturk@alaska.edu}
+}
+
+\date{April 28th, 2023}
+
+%%%%%%%%%%%%%%%%% END OF PREAMBLE %%%%%%%%%%%%%%%%
+\begin{document} 
+\maketitle
+\begin{sciabstract}
+    
+\end{sciabstract}
+
+\section*{Introduction}
+This is an introduction that introduces
+
+\section*{Geomagnetic Disturbances}
+
+\section*{SWUG Project}
+COPIED ABSTRACT FROM AUSTIN (CHANGE):
+\par
+Dynamic interaction between the solar wind and the Earth's magnetosphere can create strong geomagnetic field disturbances and trigger Geomagnetically Induced Currents (GICs). GICs can cause dramatic space weather impact such as damage to high-voltage power transformers and increased corrosion of pipelines. Ground observations of geomagnetic fields are widely used for GIC studies, but their spatial coverages are not sufficient to capture a localized GIC event.
+The UAF Space Weather UnderGround (SWUG) education outreach program will build a cost-effective and research-capable array of magnetometers across Alaska and provide high-spatial resolution geomagnetic field data with $1 \frac{nT}{s}$ accuracy. Thus, the UAF SWUG array data will improve our understanding and prediction of GICs
+\par
+More about: SWUG website, Austin's Capstone
+
+\subsection*{SAM-III Magnetometers}
+Simple Aurora Monitor - III or SAM-III is...
+
+\subsection*{GIMA Magnetometers}
+Geophysical Institude Magnetometer Array or GIMA is...
+
+\section*{Methodology}
+Python and pandas data processing... 
+
+\section*{Results}
+\includegraphics[scale=0.5]{plots/histograms/multiyear_analysis-by_year-resampled_dhdt_count/dH-dt_year_D_count_above_threshold_of_1.png}
+
+\section*{Conclusion}
+There is much potential with this data.
+
+\end{document}
