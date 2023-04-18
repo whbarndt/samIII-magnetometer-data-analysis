@@ -94,14 +94,17 @@ while True:
     else:
         print("Enter valid resample rate.")
 
-print(f"Would you like to include Sun Spot Totals in the graphs? [Options: yes, no]")
+print(f"What extra data would you like to plot ? [Options: sunspots, subsurftemp, no]")
 while True:
-    sun_spot_flag_input = input()
-    if sun_spot_flag_input == 'yes':
-        sunspot_flag = True
+    extra_data = input()
+    if extra_data == 'sunspots':
+        extra_data_flag = True
         break
-    elif sun_spot_flag_input == 'no':
-        sunspot_flag = False
+    elif extra_data == 'subsurftemp':
+        extra_data_flag = True
+        break
+    elif extra_data == 'no':
+        extra_data_flag = False
         break
     else:
         print("Enter valid answer.")
@@ -139,7 +142,7 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
     day_threshold = 500
     month_threshold = 500
     year_threshold = 500
-    diff_threshold = 6
+    diff_threshold = 1
 
     fig_size=[15,10]
 
@@ -254,16 +257,6 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
 
             # Plotting
             fig1, ax1 = plt.subplots(figsize=fig_size)
-            # Sun Spot Data
-            if sunspot_flag == True:
-                # Loading Sunspot data
-                ssn_df = pd.read_csv(f"{directory_preambles[current_machine]}SN_y_tot_V2.0.csv")
-                ssn_df.Year = ssn_df.Year-0.5
-                ax2 = ax1.twinx()
-                ax2.plot(ssn_df.Year, ssn_df.Total)
-                ax2.fill_between(np.arange(2008,2023,1), ssn_df.Total[ssn_df.Year>=2008], 0, color='green', alpha=0.4)
-                ax2.set_ylabel('Sun Spot Total #')
-                ax2.set_ylim(bottom=0)
             # Histogram Count Data
             ax1.bar(samIII_one_comp_of_all_years_dataframe.year.tolist(), samIII_one_comp_of_all_years_dataframe[components[i]].tolist(), width, label='SAMIII')
             ax1.bar(list(np.asarray(gima_one_comp_of_all_years_dataframe.year.tolist()) + width), gima_one_comp_of_all_years_dataframe[components[i]].tolist(), width, label='GIMA')
@@ -274,19 +267,34 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
             # First argument - A list of positions at which ticks should be placed
             # Second argument -  A list of labels to place at the given locations
             plt.xticks(list(np.asarray(gima_one_comp_of_all_years_dataframe.year.tolist()) + width / 2), gima_one_comp_of_all_years_dataframe.year.tolist())
-            plt.xlim([2009,2022])
+            plt.xlim([2009,2023])
             plt.title(f"GIMA and SAMIII Magnetometer Data - {resample} counts of {components[i]}-component values > {year_threshold} nT")
+            
             plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{components[i]}-component_year_{resample}_count_above_threshold_of_{year_threshold}.png")
+
+    # Number of days above dHdt threshold by each year, for multiple years - "multiyear_analysis-by_year-resampled_dhdt_count"
     if chosen_anaylsis == analysis_types[4]:
+        
+        print("Before dropping INFs and NANs")
+        print(samIII_all_years_dataframe)
+        print(gima_all_years_dataframe)
+        
+        # Convert all inf to nan and drop rows with them
+        #samIII_all_years_dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
+        samIII_all_years_dataframe.dropna(inplace=True)
+        #gima_all_years_dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
+        gima_all_years_dataframe.dropna(inplace=True)
+        
+        print("Dropped INFs and NANs")
+        print(samIII_all_years_dataframe)
+        print(gima_all_years_dataframe)
         
         # Filter based on threshold
         samIII_all_years_dataframe = samIII_all_years_dataframe[ (samIII_all_years_dataframe['dbdt'] > diff_threshold) | (samIII_all_years_dataframe['dbdt'] < -diff_threshold) ]
         gima_all_years_dataframe = gima_all_years_dataframe[ (gima_all_years_dataframe['dbdt'] > diff_threshold) | (gima_all_years_dataframe['dbdt'] < -diff_threshold) ]
         
-        # Convert all inf to nan and drop rows with them
-        gima_all_years_dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
-        gima_all_years_dataframe.dropna(inplace=True)
-        
+        print("Filtered > |6nT/s|")
+
         print(samIII_all_years_dataframe)
         print(gima_all_years_dataframe)
         
@@ -306,16 +314,28 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
 
         # Plotting
         fig1, ax1 = plt.subplots(figsize=fig_size)
-        # Sun Spot Data
-        if sunspot_flag == True:
-            # Loading Sunspot data
-            ssn_df = pd.read_csv(f"{directory_preambles[current_machine]}SN_y_tot_V2.0.csv")
-            ssn_df.Year = ssn_df.Year-0.5
-            ax2 = ax1.twinx()
-            ax2.plot(ssn_df.Year, ssn_df.Total)
-            ax2.fill_between(np.arange(2008,2023,1), ssn_df.Total[ssn_df.Year>=2008], 0, color='green', alpha=0.4)
-            ax2.set_ylabel('Sun Spot Total #')
-            ax2.set_ylim(bottom=0)
+
+        # Extra Data
+        if extra_data_flag == True:
+            if extra_data == 'sunspots':
+                # Loading Sunspot data
+                ssn_df = pd.read_csv(f"{directory_preambles[current_machine]}SN_y_tot_V2.0.csv")
+                ssn_df.Year = ssn_df.Year-0.5
+                ax2 = ax1.twinx()
+                ax2.plot(ssn_df.Year, ssn_df.Total)
+                ax2.fill_between(np.arange(2008,2023,1), ssn_df.Total[ssn_df.Year>=2008], 0, color='green', alpha=0.4)
+                ax2.set_ylabel('Sun Spot Total #')
+                ax2.set_ylim(bottom=0)
+            else:
+                # Loading Subsurface Temperature data (IN-PROGRESS)
+                temper_df = pd.read_pickle(f"{directory_preambles[current_machine]}rwis_resampled.pickle")
+                temper_df.reset_index(inplace=True)
+                ax2 = ax1.twinx()
+                ax2.plot(temper_df["obtime"], temper_df["subf"])
+                #ax2.fill_between(np.arange(2008,2023,1), temper_df.subf[temper_df.index>=2008], 0, color='blue', alpha=0.4)
+                ax2.set_ylabel('Subsurface Temperature')
+                ax2.set_ylim(bottom=0)
+                
         # Histogram Count Data
         if logscale_flag == True:
             ax1.set_yscale('log')
@@ -328,9 +348,12 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
         # First argument - A list of positions at which ticks should be placed
         # Second argument -  A list of labels to place at the given locations
         plt.xticks(list(np.asarray(gima_all_years_dataframe.year.tolist()) + width / 2), gima_all_years_dataframe.year.tolist())
-        plt.xlim([2009,2022])
+        plt.xlim([2009,2023])
         plt.title(f"GIMA and SAMIII Magnetometer Data - minute counts of dH/dt values > {diff_threshold} nT/s")
-        plt.savefig(f"./plots/histograms/{chosen_anaylsis}/dH-dt_year_{resample}_count_above_threshold_of_{diff_threshold}.png")
+        if extra_data_flag:
+            plt.savefig(f"./plots/histograms/{chosen_anaylsis}/dH-dt_year_{resample}_count_above_threshold_of_{diff_threshold}_{extra_data}.png")
+        else:
+            plt.savefig(f"./plots/histograms/{chosen_anaylsis}/dH-dt_year_{resample}_count_above_threshold_of_{diff_threshold}.png")
         
 ### Main
 def main():
@@ -344,7 +367,8 @@ def main():
     # Load SAMIII Data
     samIII_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/*-SAMIII-Processed-Data.pickle"
     #samIII_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/{start_year}-{end_year}-SAMIII-Processed-Data.pickle"
-    samIII_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/samIII/samIII_{start_year}_to_{end_year}_1min.pkl"
+    samIII_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/Doga/samIII_{start_year}_to_{end_year}_1min.pkl"
+
     samIII_selected_year_path = f"{directory_preambles[current_machine]}pickles/samIII/{selected_year}-SAMIII-Processed-Data.pickle"
     samIII_database_dir_list = gb.glob(samIII_database_dir)
     
@@ -365,7 +389,7 @@ def main():
     # Load GIMA Data
     gima_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/*-GIMA-Processed-Data.pickle"
     #gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/{start_year}-{end_year}-GIMA-{gima_site}-Processed-Data.pickle"
-    gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/gima_{start_year}_to_{end_year}_1min.pkl"
+    gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/Doga/gima_{start_year}_to_{end_year}_1min.pkl"
     gima_selected_year_path = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/{selected_year}-GIMA-{gima_site}-Processed-Data.pickle"
     gima_database_dir_list = gb.glob(gima_database_dir)
     
