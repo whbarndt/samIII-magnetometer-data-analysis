@@ -105,6 +105,18 @@ while True:
         break
     else:
         print("Enter valid answer.")
+        
+print(f"Would you like to include Subsurface temperature data in the graphs? [Options: yes, no]")
+while True:
+    tempdata_flag = input()
+    if tempdata_flag == 'yes':
+        tempdata_flag = True
+        break
+    elif tempdata_flag == 'no':
+        tempdata_flag = False
+        break
+    else:
+        print("Enter valid answer.")
 
 print(f"Would you like to plot in log-scale? [Options: yes, no]")
 while True:
@@ -326,6 +338,15 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
             ax2.plot(ssn_df.Year, ssn_df.Total)
             ax2.fill_between(np.arange(2008,2023,1), ssn_df.Total[ssn_df.Year>=2008], 0, color='green', alpha=0.4)
             ax2.set_ylabel('Sun Spot Total #')
+            ax2.set_ylim(bottom=0)
+        # Temperature Data (In-Progress)
+        if tempdata_flag == True:
+            # Loading Sunspot data
+            temper_df = pd.read_pickle(f"{directory_preambles[current_machine]}rwis.pickle")
+            ax2 = ax1.twinx()
+            ax2.plot(temper_df.index, temper_df.subf)
+            ax2.fill_between(np.arange(2008,2023,1), temper_df.subf[temper_df.index>=2008], 0, color='blue', alpha=0.4)
+            ax2.set_ylabel('Subsurface Temperature')
             ax2.set_ylim(bottom=0)
         # Histogram Count Data
         if logscale_flag == True:
