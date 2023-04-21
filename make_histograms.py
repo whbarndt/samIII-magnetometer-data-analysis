@@ -42,10 +42,15 @@ analysis_types_abbrev = [
 ]
 
 thresholds = {
-    'D' : 500,
-    'M' : 500,
+    'D' : 250,
+    'M' : 250,
     'Y' : 500,
     'dbdt' : 6
+}
+
+full_resample_names = {
+    'D' : 'Daily',
+    'A' : 'Yearly',
 }
 
 ### Prompts
@@ -134,13 +139,8 @@ dateformat = "%d.%m.%Y %H:%M:%S"
 def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, samIII_all_years_dataframe, samIII_multiyear_database_dir, gima_all_years_dataframe, gima_multiyear_database_dir, chosen_anaylsis, resample):
     
     print("Starting analysis function...")
-    # Define Thresholds
-    day_threshold = 500
-    month_threshold = 500
-    year_threshold = 500
-    diff_threshold = 1
 
-    fig_size=[15,10]
+    fig_size=[12,8]
 
     # Number of readings above threshold by each month, for a year - "year_analysis-by_month-reading_count"
     if chosen_anaylsis == analysis_types[0]:
@@ -211,9 +211,9 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
         for i in range(len(components)):
             
             local_threshold = 0
-            print("Before dropping INFs and NANs")
-            print(samIII_all_years_dataframe)
-            print(gima_all_years_dataframe)
+            #print("Before dropping INFs and NANs")
+            #print(samIII_all_years_dataframe)
+            #print(gima_all_years_dataframe)
             
             # Convert all inf to nan and drop rows with them
             #samIII_all_years_dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
@@ -221,22 +221,22 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
             #gima_all_years_dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
             gima_all_years_dataframe.dropna(inplace=True)
             
-            print("Dropped INFs and NANs")
-            print(samIII_all_years_dataframe)
-            print(gima_all_years_dataframe)
+            #print("Dropped INFs and NANs")
+            #print(samIII_all_years_dataframe)
+            #print(gima_all_years_dataframe)
             
             # Filter based on threshold
             if process_type == 'dbdt':
                 samIII_one_comp_of_all_years_dataframe = samIII_all_years_dataframe[ (samIII_all_years_dataframe[components[i]] > thresholds['dbdt']) | (samIII_all_years_dataframe[components[i]] < -thresholds['dbdt']) ]
                 gima_one_comp_of_all_years_dataframe = gima_all_years_dataframe[ (gima_all_years_dataframe[components[i]] > thresholds['dbdt']) | (gima_all_years_dataframe[components[i]] < -thresholds['dbdt']) ]
                 print(f"Filtered > |{thresholds['dbdt']}|")
-                print(samIII_one_comp_of_all_years_dataframe)
+                #print(samIII_one_comp_of_all_years_dataframe)
                 local_threshold = thresholds['dbdt']
             else:
                 samIII_one_comp_of_all_years_dataframe = samIII_all_years_dataframe[ (samIII_all_years_dataframe[components[i]] > thresholds['Y']) | (samIII_all_years_dataframe[components[i]] < -thresholds['Y']) ]
                 gima_one_comp_of_all_years_dataframe = gima_all_years_dataframe[ (gima_all_years_dataframe[components[i]] > thresholds['Y']) | (gima_all_years_dataframe[components[i]] < -thresholds['Y']) ]
                 print(f"Filtered > |{thresholds['Y']}|")
-                print(gima_one_comp_of_all_years_dataframe)
+                #print(gima_one_comp_of_all_years_dataframe)
                 local_threshold = thresholds['Y']
                 
             if samIII_one_comp_of_all_years_dataframe.empty:
@@ -254,55 +254,67 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
             gima_one_comp_of_all_years_dataframe = gima_one_comp_of_all_years_dataframe.resample("Y").count()
             gima_one_comp_of_all_years_dataframe['year'] = gima_one_comp_of_all_years_dataframe.index.year
 
-            print(samIII_one_comp_of_all_years_dataframe)
-            print(gima_one_comp_of_all_years_dataframe)
+            #print(samIII_one_comp_of_all_years_dataframe)
+            #print(gima_one_comp_of_all_years_dataframe)
         
             # Width of a bar 
             width = 0.3       
 
             # Plotting
             fig1, ax1 = plt.subplots(figsize=fig_size)
+            sns.set_theme()
+            sns.set_palette('colorblind')
+            # Histogram Count Data
+            if logscale_flag == True:
+                ax1.set_yscale('log')
+            ax1.bar(samIII_one_comp_of_all_years_dataframe.year.tolist(), samIII_one_comp_of_all_years_dataframe[components[i]].tolist(), width, label='SAMIII', color=sns.color_palette()[0])
+            ax1.bar(list(np.asarray(gima_one_comp_of_all_years_dataframe.year.tolist()) + width), gima_one_comp_of_all_years_dataframe[components[i]].tolist(), width, label='GIMA', color=sns.color_palette()[1])
+            # Finding the best position for legends and putting it
+            ax1.legend(loc='best')
+            ax1.set_xlabel('Year')
+            ax1.set_ylabel(f'# of {full_resample_names[resample]} {components[i]} counts')
+            # First argument - A list of positions at which ticks should be placed
+            # Second argument -  A list of labels to place at the given locations
+            plt.xticks(list(np.asarray(gima_one_comp_of_all_years_dataframe.year.tolist()) + width / 2), gima_one_comp_of_all_years_dataframe.year.tolist())
+            plt.xlim([2009,2023])
+
             # Extra Data
             if extra_data_flag == True:
                 if extra_data == 'sunspots':
                     # Loading Sunspot data
                     ssn_df = pd.read_csv(f"{directory_preambles[current_machine]}SN_y_tot_V2.0.csv")
+                    # Data manipulation for plotting
                     ssn_df.Year = ssn_df.Year-0.5
+                    # Plotting
                     ax2 = ax1.twinx()
-                    ax2.plot(ssn_df.Year, ssn_df.Total)
-                    ax2.fill_between(np.arange(2008,2023,1), ssn_df.Total[ssn_df.Year>=2008], 0, color='green', alpha=0.4)
-                    ax2.set_ylabel('Sun Spot Total #')
+                    sns.lineplot(x=ssn_df.Year, y=ssn_df.Total, color=sns.color_palette()[2], ax=ax2)
+                    ax2.fill_between(np.arange(2008,2023,1), ssn_df.Total[ssn_df.Year>=2008], 0, color=sns.color_palette()[2], alpha=0.3)
+                    ax2.set_ylabel('Sun Spot Total #', color=sns.color_palette()[2])
                     ax2.set_ylim(bottom=0)
                 else:
-                    # Loading Subsurface Temperature data (IN-PROGRESS)
+                    # Loading Subsurface Temperature data
                     temper_df = pd.read_pickle(f"{directory_preambles[current_machine]}rwis_resampled.pickle")
+                    # Data manipulation for plotting
+                    temper_df.dropna(inplace=True)
+                    temper_df = temper_df.resample('A').mean()
                     temper_df.reset_index(inplace=True)
+                    temper_df['Year'] = temper_df.obtime.dt.year
+                    start_year = temper_df.Year.tolist()[0]
+                    end_year = temper_df.Year.tolist()[-1]
+                    # Plotting
                     ax2 = ax1.twinx()
-                    ax2.plot(temper_df["obtime"], temper_df["subf"])
-                    #ax2.fill_between(np.arange(2008,2023,1), temper_df.subf[temper_df.index>=2008], 0, color='blue', alpha=0.4)
-                    ax2.set_ylabel('Subsurface Temperature')
+                    sns.lineplot(x=temper_df.obtime.dt.year, y=temper_df.subf, color=sns.color_palette()[4], ax=ax2)
+                    ax2.fill_between(np.arange(start_year,end_year+1,1), temper_df.subf, 0, color=sns.color_palette()[4], alpha=0.3)
+                    ax2.set_ylabel('Subsurface Temperature', color=sns.color_palette()[4])
                     ax2.set_ylim(bottom=0)
-            # Histogram Count Data
-            if logscale_flag == True:
-                ax1.set_yscale('log')
-            ax1.bar(samIII_one_comp_of_all_years_dataframe.year.tolist(), samIII_one_comp_of_all_years_dataframe[components[i]].tolist(), width, label='SAMIII')
-            ax1.bar(list(np.asarray(gima_one_comp_of_all_years_dataframe.year.tolist()) + width), gima_one_comp_of_all_years_dataframe[components[i]].tolist(), width, label='GIMA')
-            # Finding the best position for legends and putting it
-            ax1.legend(loc='best')
-            ax1.set_xlabel('Year')
-            ax1.set_ylabel(f'# of {components[i]} counts')
-            # First argument - A list of positions at which ticks should be placed
-            # Second argument -  A list of labels to place at the given locations
-            plt.xticks(list(np.asarray(gima_one_comp_of_all_years_dataframe.year.tolist()) + width / 2), gima_one_comp_of_all_years_dataframe.year.tolist())
-            plt.xlim([2009,2023])
-            if process_type == 'dhdt':
-                plt.title(f"GIMA and SAMIII Magnetometer Data - {resample} counts of {components[i]} values > {local_threshold} nT/s")
+            if process_type == 'dbdt':
+                plt.title(f"GIMA and SAMIII Magnetometer Data - {full_resample_names[resample]} counts of {components[i]} values > {local_threshold} nT/s")
             else:
-                plt.title(f"GIMA and SAMIII Magnetometer Data - {resample} counts of {components[i]} values > {local_threshold} nT")
+                plt.title(f"GIMA and SAMIII Magnetometer Data - {full_resample_names[resample]} counts of {components[i]} values > {local_threshold} nT")
             if extra_data_flag:
-                plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{components[i]}_year_{resample}_count_above_threshold_of_{local_threshold}_{extra_data}.png")
+                plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{components[i]}_year_{full_resample_names[resample]}_count_above_threshold_of_{local_threshold}_{extra_data}.png")
             else:
-                plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{components[i]}_year_{resample}_count_above_threshold_of_{local_threshold}.png")
+                plt.savefig(f"./plots/histograms/{chosen_anaylsis}/{components[i]}_year_{full_resample_names[resample]}_count_above_threshold_of_{local_threshold}.png")
         
 ### Main
 def main():
