@@ -13,13 +13,18 @@ directory_preambles = {
 num_months = 12
 num_days = 31
 
-download_start_year = 2019
-download_end_year = 2022
+gima_download_start_year = 2019
+gima_download_end_year = 2022
 
-reeves_start_year = 2010 # 2009
+reeves_start_year = 2010 # 2009 technically but unusable data
 reeves_end_year = 2022
+num_reeves_years = reeves_end_year - reeves_start_year
 swugat_start_year = 2023
 swugat_end_year = 2023
+
+processing_start_year = 2010
+processing_end_year = 2022
+num_processing_years = processing_end_year - processing_start_year
 
 ### SWUG ATLAS DEFINES ###
 swugat_website = "http://swugatlas.gi.alaska.edu"
@@ -41,8 +46,10 @@ gima_website = 'http://magnetometer.rcs.alaska.edu'
 gima_sites = [
     "trapper"
 ]
-gima_site = "trapper"
-'''gima_sites = [
+selected_gima_site = 'trapper'
+
+''' All gima sites
+gima_sites = [
     "poker",
     "kaktovik",
     "arctic",

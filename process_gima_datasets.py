@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# preprocess_gima_csvs.py
+# process_gima_datasets.py
 # Hunter Barndt
 # Purpose: Subtract each day's values in a year by the first value of the day
 
@@ -10,24 +10,20 @@ import time as tm
 import numpy as np
 import glob as gb
 
-# Self created imports
 from define import directory_preambles
 from define import current_machine
 from define import gima_sites
+from define import selected_gima_site
+from define import processing_start_year
+from define import processing_end_year 
 
-### Global Variables ###
-#start_year = 2009
-start_year = 2010
-end_year = 2022
-num_years = end_year - start_year
-
-gima_site = 'trapper'
+### Prompts ###
 
 # Select specific year to analyze
-print(f"Which year would you like to process? [Option(s): {start_year} thru {end_year}]")
+print(f"Which year would you like to process? [Option(s): {processing_start_year} thru {processing_end_year}]")
 while True:
     selected_year = input()
-    if int(selected_year) >= (start_year) or int(selected_year) <= end_year:
+    if int(selected_year) >= (processing_start_year) or int(selected_year) <= processing_end_year:
         selected_year = int(selected_year)
         break
     else:
@@ -46,11 +42,11 @@ while True:
         print("Enter valid site.")
 
 # Declare pickle and csv output directories
-pickle_path_name = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/{selected_year}-GIMA-{gima_site}-Processed-Data.pickle"
-csv_path_name = f"{directory_preambles[current_machine]}csvs/gima/{gima_site}/{selected_year}-GIMA-{gima_site}-Processed-Data.csv"
+pickle_path_name = f"{directory_preambles[current_machine]}pickles/gima/{selected_gima_site}/{selected_year}-GIMA-{selected_gima_site}-Processed-Data.pickle"
+csv_path_name = f"{directory_preambles[current_machine]}csvs/gima/{selected_gima_site}/{selected_year}-GIMA-{selected_gima_site}-Processed-Data.csv"
 
 # Get csv directory
-glob_csv_year_dir = f"{directory_preambles[current_machine]}GIMA_SAM_Data/{gima_site}/{selected_year}/*.csv"
+glob_csv_year_dir = f"{directory_preambles[current_machine]}GIMA_SAM_Data/{selected_gima_site}/{selected_year}/*.csv"
 csv_year_dir_list = gb.glob(glob_csv_year_dir)
 dateformat = "%Y_%m_%d %H:%M:%S"
 column_names = ['time', 'time-d', 'x', 'y', 'z']
@@ -82,6 +78,12 @@ def main():
         day_dataframe['H'] = np.sqrt(day_dataframe['x'] ** 2 + day_dataframe['y'] ** 2)
         # Calculates declination component with respect to the true north magnetic field
         day_dataframe['D'] = np.arctan2(day_dataframe['y'], day_dataframe['x'])
+        # Calculates the absolute value differential in H
+        day_dataframe['dH'] = np.abs(day_dataframe['H'].diff())
+        # Calculates the differential in time
+        day_dataframe['dt'] = day_dataframe.index.to_series().diff().dt.total_seconds()
+        # Calculates the change of H in time
+        day_dataframe['dHdt'] = day_dataframe['dH'] / day_dataframe['dt']
         year_dataframe = pd.concat([year_dataframe, day_dataframe])
         
     print(f"Size of Dataframe: {year_dataframe.size}")

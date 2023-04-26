@@ -10,11 +10,12 @@ import time as tm
 import numpy as np
 import glob as gb
 
+from define import current_machine
+from define import directory_preambles
+from define import processing_start_year
+from define import processing_end_year 
+
 ### Global Variables ###
-#start_year = 2009
-start_year = 2010
-end_year = 2022
-num_years = end_year - start_year
 all_year_dataframes = []
 
 # Only used for samIII datasets at the moment
@@ -23,11 +24,13 @@ dataset_types = [
     #'gima'
 ]
 
+### Prompts ###
+
 # Select specific year to analyze
-print(f"Which year would you like to process? [Option(s): {start_year} thru {end_year}]")
+print(f"Which year would you like to process? [Option(s): {processing_start_year} thru {processing_end_year}]")
 while True:
     selected_year = input()
-    if int(selected_year) >= (start_year) or int(selected_year) <= end_year:
+    if int(selected_year) >= (processing_start_year) or int(selected_year) <= processing_end_year:
         selected_year = int(selected_year)
         break
     else:
@@ -44,21 +47,6 @@ while True:
         break
     else:
         print("Enter valid year.")
-
-# Declare pickle and csv output directories
-pickle_path_name = f"D:/UAF/PHYS Capstone/pickles/{dataset_type}/{selected_year}-{dataset_type.upper()}-Processed-Data.pickle"
-csv_path_name = f"D:/UAF/PHYS Capstone/csvs/{dataset_type}/{selected_year}-{dataset_type.upper()}-Processed-Data.csv"
-
-# Get database directory
-glob_database_dir = f"D:/UAF/PHYS Capstone/pickles/{dataset_type}/*-{dataset_type.upper()}-Data.pickle"
-database_dir_list = gb.glob(glob_database_dir)
-dateformat = "%d.%m.%Y %H:%M:%S"
-
-# Get all available yearly databases
-for database in database_dir_list:
-    temp_dataframe = pd.read_pickle(database)
-    all_year_dataframes.append(temp_dataframe)
-selected_year_path = f"D:/UAF/PHYS Capstone/pickles/{dataset_type}/{selected_year}-{dataset_type.upper()}-Data.pickle"
 
 ### Functions ###
 
@@ -85,6 +73,22 @@ def getSelectedYearSubtractedData(df, components):
 ### Main ###
 
 def main():
+    # Declare pickle and csv output directories
+    pickle_path_name = f"{directory_preambles[current_machine]}pickles/{dataset_type}/{selected_year}-{dataset_type.upper()}-Processed-Data.pickle"
+    #csv_path_name = f"{directory_preambles[current_machine]}csvs/{dataset_type}/{selected_year}-{dataset_type.upper()}-Processed-Data.csv"
+
+    # Get database directory
+    glob_database_dir = f"{directory_preambles[current_machine]}pickles/{dataset_type}/*-{dataset_type.upper()}-Data.pickle"
+    database_dir_list = gb.glob(glob_database_dir)
+    dateformat = "%d.%m.%Y %H:%M:%S"
+
+    # Get all available yearly databases
+    for database in database_dir_list:
+        temp_dataframe = pd.read_pickle(database)
+        all_year_dataframes.append(temp_dataframe)
+    selected_year_path = f"{directory_preambles[current_machine]}pickles/{dataset_type}/{selected_year}-{dataset_type.upper()}-Data.pickle"
+    
+    # Define components measured by magnetometer
     components = ['x', 'y', 'z']
 
     selected_year_dataframe = pd.read_pickle(selected_year_path)
@@ -93,8 +97,15 @@ def main():
     selected_year_dataframe_subbed['H'] = np.sqrt(selected_year_dataframe_subbed['x'] ** 2 + selected_year_dataframe_subbed['y'] ** 2)
     # Calculates declination component with respect to the true north magnetic field
     selected_year_dataframe_subbed['D'] = np.arctan2(selected_year_dataframe_subbed['y'], selected_year_dataframe_subbed['x'])
+    # Calculates the absolute value differential in H
+    selected_year_dataframe_subbed['dH'] = np.abs(selected_year_dataframe_subbed['H'].diff())
+    # Calculates the differential in time
+    selected_year_dataframe_subbed['dt'] = selected_year_dataframe_subbed.index.to_series().diff().dt.total_seconds()
+    # Calculates the change of H in time
+    selected_year_dataframe_subbed['dHdt'] = selected_year_dataframe_subbed['dH'] / selected_year_dataframe_subbed['dt']
     selected_year_dataframe_subbed.to_pickle(pickle_path_name)
-    selected_year_dataframe_subbed.to_csv(csv_path_name)
+    #selected_year_dataframe_subbed.to_csv(pickle_path_name)
+
     
 start_time = tm.time()
 main()
