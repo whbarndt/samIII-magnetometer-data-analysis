@@ -15,7 +15,7 @@ import time as tm
 
 # Self created imports
 from define import gima_sites
-from define import gima_site 
+from define import selected_gima_site 
 from define import current_machine
 from define import directory_preambles
 
@@ -293,7 +293,7 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
                     ax2.set_ylim(bottom=0)
                 else:
                     # Loading Subsurface Temperature data
-                    temper_df = pd.read_pickle(f"{directory_preambles[current_machine]}rwis_resampled.pickle")
+                    temper_df = pd.read_pickle(f"{directory_preambles[current_machine]}Subsurftemperature/rwis_GWSA2_resampled.pickle")
                     # Data manipulation for plotting
                     temper_df.dropna(inplace=True)
                     temper_df = temper_df.resample('A').mean()
@@ -347,10 +347,10 @@ def main():
     samIII_selected_year_dataframe = samIII_selected_year_dataframe.set_index('datetime')
 
     # Load GIMA Data
-    gima_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/*-GIMA-Processed-Data.pickle"
-    #gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/{start_year}-{end_year}-GIMA-{gima_site}-Processed-Data.pickle"
+    gima_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{selected_gima_site}/*-GIMA-Processed-Data.pickle"
+    #gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/gima/{selected_gima_site}/{start_year}-{end_year}-GIMA-{selected_gima_site}-Processed-Data.pickle"
     gima_multiyear_database_dir = f"{directory_preambles[current_machine]}pickles/Doga/gima_{start_year}_to_{end_year}_1min.pkl"
-    gima_selected_year_path = f"{directory_preambles[current_machine]}pickles/gima/{gima_site}/{selected_year}-GIMA-{gima_site}-Processed-Data.pickle"
+    gima_selected_year_path = f"{directory_preambles[current_machine]}pickles/gima/{selected_gima_site}/{selected_year}-GIMA-{selected_gima_site}-Processed-Data.pickle"
     gima_database_dir_list = gb.glob(gima_database_dir)
     
     try:
