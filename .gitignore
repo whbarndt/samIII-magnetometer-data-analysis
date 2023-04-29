@@ -8,6 +8,7 @@ read_pickles.py
 readnplot_swugat_magdat.py
 readnplot_swugat_temptxts.py
 *.txt
+*.csv
 
 # LaTeX stuff
 *.aux

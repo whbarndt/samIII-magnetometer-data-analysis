@@ -44,7 +44,7 @@ analysis_types_abbrev = [
 thresholds = {
     'D' : 250,
     'M' : 250,
-    'Y' : 500,
+    'Y' : 100,
     'dbdt' : 6
 }
 
@@ -68,7 +68,7 @@ while True:
     process_type = input()
     if process_type == 'xyz' or process_type == 'H' or process_type == 'dbdt':
         if process_type == 'xyz':
-            components = ['x','y','z']
+            components = ['z']
         elif process_type == 'H':
             components = ['H']
         elif process_type == 'dbdt':
@@ -211,9 +211,11 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
         for i in range(len(components)):
             
             local_threshold = 0
-            #print("Before dropping INFs and NANs")
-            #print(samIII_all_years_dataframe)
-            #print(gima_all_years_dataframe)
+            print("Before dropping INFs and NANs")
+            print(f"SAM III size: {len(samIII_all_years_dataframe.index)}")
+            print(samIII_all_years_dataframe)
+            print(f"GIMA size: {len(gima_all_years_dataframe.index)}")
+            print(gima_all_years_dataframe)
             
             # Convert all inf to nan and drop rows with them
             #samIII_all_years_dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
@@ -221,16 +223,28 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
             #gima_all_years_dataframe.replace([np.inf, -np.inf], np.nan, inplace=True)
             gima_all_years_dataframe.dropna(inplace=True)
             
-            #print("Dropped INFs and NANs")
-            #print(samIII_all_years_dataframe)
-            #print(gima_all_years_dataframe)
+            print("Dropped INFs and NANs")
+            print(f"SAM III size: {len(samIII_all_years_dataframe.index)}")
+            print(samIII_all_years_dataframe)
+            print(f"GIMA size: {len(gima_all_years_dataframe.index)}")
+            print(gima_all_years_dataframe)
+            
+            print(f"SAM III size before filter: {len(samIII_all_years_dataframe.index)}")
+            print(samIII_all_years_dataframe)
+            print(f"GIMA size before filter: {len(gima_all_years_dataframe.index)}")
+            print(gima_all_years_dataframe)
             
             # Filter based on threshold
             if process_type == 'dbdt':
-                samIII_one_comp_of_all_years_dataframe = samIII_all_years_dataframe[ (samIII_all_years_dataframe[components[i]] > thresholds['dbdt']) | (samIII_all_years_dataframe[components[i]] < -thresholds['dbdt']) ]
-                gima_one_comp_of_all_years_dataframe = gima_all_years_dataframe[ (gima_all_years_dataframe[components[i]] > thresholds['dbdt']) | (gima_all_years_dataframe[components[i]] < -thresholds['dbdt']) ]
+                samIII_one_comp_of_all_years_dataframe = samIII_all_years_dataframe[ (samIII_all_years_dataframe[components[i]] > thresholds['dbdt']) | (samIII_all_years_dataframe[components[i]] < -thresholds['dbdt'])]
+                gima_one_comp_of_all_years_dataframe = gima_all_years_dataframe[ (gima_all_years_dataframe[components[i]] > thresholds['dbdt']) | (gima_all_years_dataframe[components[i]] < -thresholds['dbdt'])]
+                
                 print(f"Filtered > |{thresholds['dbdt']}|")
-                #print(samIII_one_comp_of_all_years_dataframe)
+                print(f"SAM III size after filter: {len(samIII_one_comp_of_all_years_dataframe.index)}")
+                print(samIII_one_comp_of_all_years_dataframe)
+                print(f"GIMA size after filter: {len(gima_one_comp_of_all_years_dataframe.index)}")
+                print(gima_one_comp_of_all_years_dataframe)
+                
                 local_threshold = thresholds['dbdt']
             else:
                 samIII_one_comp_of_all_years_dataframe = samIII_all_years_dataframe[ (samIII_all_years_dataframe[components[i]] > thresholds['Y']) | (samIII_all_years_dataframe[components[i]] < -thresholds['Y']) ]
@@ -246,10 +260,12 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
                 print(f"No valid values for GIMA {components[i]}-component calculations!!")
             
             # Resample to get year count
+            samIII_one_comp_of_all_years_dataframe[components[i]] = np.abs(samIII_one_comp_of_all_years_dataframe[components[i]])
             samIII_one_comp_of_all_years_dataframe = samIII_one_comp_of_all_years_dataframe.resample(resample).max()
             samIII_one_comp_of_all_years_dataframe = samIII_one_comp_of_all_years_dataframe.resample("Y").count()
             samIII_one_comp_of_all_years_dataframe['year'] = samIII_one_comp_of_all_years_dataframe.index.year
             
+            gima_one_comp_of_all_years_dataframe[components[i]] = np.abs(gima_one_comp_of_all_years_dataframe[components[i]])
             gima_one_comp_of_all_years_dataframe = gima_one_comp_of_all_years_dataframe.resample(resample).max()
             gima_one_comp_of_all_years_dataframe = gima_one_comp_of_all_years_dataframe.resample("Y").count()
             gima_one_comp_of_all_years_dataframe['year'] = gima_one_comp_of_all_years_dataframe.index.year
@@ -257,7 +273,7 @@ def run_analysis(samIII_selected_year_dataframe, gima_selected_year_dataframe, s
             #print(samIII_one_comp_of_all_years_dataframe)
             #print(gima_one_comp_of_all_years_dataframe)
         
-            # Width of a bar 
+            # Width of bar 
             width = 0.3       
 
             # Plotting
